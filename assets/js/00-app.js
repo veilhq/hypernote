@@ -653,10 +653,10 @@
       if (!days || !days.length) { dayList.innerHTML = '<div class="hn-empty">No scratch days found</div>'; }
       (days || []).forEach(function (d) {
         var row = document.createElement("div");
-        row.className = "hn-day-row";
-        row.innerHTML = '<span class="hn-day-date">' + esc(d.date) + '</span><span class="hn-day-count">' + d.count + ' entries</span>';
+        row.className = "option-row";
+        row.innerHTML = '<span class="option-row-mark"></span><span class="option-row-body"><span class="option-row-title">' + esc(d.date) + '</span></span><span class="option-row-meta">' + d.count + ' entries</span>';
         row.addEventListener("click", function () {
-          dayList.querySelectorAll(".hn-day-row").forEach(function (r) { r.classList.remove("selected"); });
+          dayList.querySelectorAll(".option-row").forEach(function (r) { r.classList.remove("selected"); });
           row.classList.add("selected"); selectedDay = d.date;
         });
         dayList.appendChild(row);
@@ -693,10 +693,11 @@
       if (!items || !items.length) { templateList.innerHTML = '<div class="hn-empty">No templates found</div>'; }
       (items || []).forEach(function (t) {
         var row = document.createElement("div");
-        row.className = "hn-day-row";
-        row.innerHTML = '<span class="hn-pick-title">' + esc(t.title) + '</span>';
+        row.className = "option-row";
+        row.innerHTML = '<span class="option-row-mark"></span><span class="option-row-body"><span class="option-row-title">' + esc(t.title) + '</span>' +
+          (t.description ? '<span class="option-row-desc">' + esc(t.description) + '</span>' : '') + '</span>';
         row.addEventListener("click", function () {
-          templateList.querySelectorAll(".hn-day-row").forEach(function (r) { r.classList.remove("selected"); });
+          templateList.querySelectorAll(".option-row").forEach(function (r) { r.classList.remove("selected"); });
           row.classList.add("selected"); selectedTemplate = t.name;
         });
         row.addEventListener("dblclick", function () { selectedTemplate = t.name; confirmTemplate(); });

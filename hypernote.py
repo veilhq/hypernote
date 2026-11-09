@@ -421,15 +421,24 @@ class HypernoteAPI:
         return dict(LAUNCH_CONTEXT)
 
     def list_templates(self) -> list:
-        """Return [{name, title}] for each markdown file in templates/."""
+        """Return [{name, title, description}] for each markdown file in templates/.
+
+        Descriptions come from the "Use For" column of the table in templates/_meta.md.
+        """
         out = []
         if not TEMPLATES_DIR.exists():
             return out
+        uses = {}
+        meta = TEMPLATES_DIR / "_meta.md"
+        if meta.exists():
+            text = meta.read_text(encoding="utf-8", errors="replace")
+            for m in re.finditer(r"^\|\s*\[([^\]]+\.md)\][^|]*\|\s*(.+?)\s*\|\s*$", text, re.MULTILINE):
+                uses[m.group(1)] = m.group(2).replace("`", "").replace("\u2014", "-")
         for path in sorted(TEMPLATES_DIR.glob("*.md")):
             if path.name.startswith("_"):
                 continue
             title = path.stem.removesuffix("-template").replace("-", " ").replace("_", " ")
-            out.append({"name": path.name, "title": title})
+            out.append({"name": path.name, "title": title, "description": uses.get(path.name, "")})
         return out
 
     def import_template(self, name: str) -> dict:
