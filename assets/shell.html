@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hypernote</title>
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Toolbar -->
+  <div class="hn-toolbar">
+    <span class="hn-menu-anchor">
+      <button class="status-chip status-chip-outlined-muted hn-badge" id="fileMenuBtn">File &#9662;</button>
+      <div class="floating-panel hn-file-menu" id="fileMenu">
+        <button class="menu-item" data-act="new"><span>New</span><span class="hn-shortcut">Ctrl+N</span></button>
+        <button class="menu-item" data-act="open"><span>Open&#8230;</span><span class="hn-shortcut">Ctrl+O</span></button>
+        <button class="menu-item" data-act="save"><span>Save</span><span class="hn-shortcut">Ctrl+S</span></button>
+        <button class="menu-item" data-act="saveas"><span>Save As&#8230;</span><span class="hn-shortcut">Ctrl+Shift+S</span></button>
+        <div class="hn-menu-sep"></div>
+        <button class="menu-item" data-act="import"><span>Import scratch day&#8230;</span></button>
+        <button class="menu-item" data-act="export"><span>Export to notes&#8230;</span><span class="hn-shortcut">Ctrl+E</span></button>
+      </div>
+    </span>
+    <span class="hn-menu-anchor">
+      <button class="status-chip status-chip-outlined-muted hn-badge" id="viewMenuBtn">View &#9662;</button>
+      <div class="floating-panel hn-file-menu" id="viewMenu">
+        <button class="menu-item" data-view="notes"><span><span class="hn-check" id="viewNotesCheck">&#10003;</span> Notes sidebar</span><span class="hn-shortcut">Ctrl+\</span></button>
+        <button class="menu-item" data-view="cheat"><span><span class="hn-check" id="viewCheatCheck">&nbsp;</span> Markdown cheatsheet</span><span class="hn-shortcut">F1</span></button>
+      </div>
+    </span>
+  </div>
+
+  <!-- Main layout: sidebar | editor | cheatsheet -->
+  <div class="hn-main">
+
+    <!-- Notes sidebar -->
+    <div class="hn-sidebar" id="sidebar">
+      <div class="hn-panel-header">
+        <span class="hn-panel-label">Notes</span>
+        <span class="hn-panel-actions">
+          <button class="icon-button hn-icon-sm" id="newFolderBtn" data-tooltip="New folder">+</button>
+          <button class="icon-button hn-icon-sm" id="notesRefresh" data-tooltip="Refresh">&#8635;</button>
+        </span>
+      </div>
+      <div class="hn-filter-wrap">
+        <input class="hn-filter" id="noteFilter" placeholder="filter notes&#8230;" spellcheck="false">
+      </div>
+      <div class="hn-note-list" id="noteList"></div>
+    </div>
+
+    <!-- Editor column -->
+    <div class="hn-editor-col">
+
+      <!-- Formatting ribbon (B): sits above the document, offset by the sidebar -->
+      <div class="hn-ribbon" id="formatBar">
+        <button class="hn-fmt" data-fmt="h1" data-tooltip="Heading 1">H1</button>
+        <button class="hn-fmt" data-fmt="h2" data-tooltip="Heading 2">H2</button>
+        <button class="hn-fmt" data-fmt="h3" data-tooltip="Heading 3">H3</button>
+        <span class="hn-fmt-sep"></span>
+        <button class="hn-fmt hn-fmt-bold" data-fmt="bold" data-tooltip="Bold (Ctrl+B)">B</button>
+        <button class="hn-fmt hn-fmt-italic" data-fmt="italic" data-tooltip="Italic (Ctrl+I)">I</button>
+        <button class="hn-fmt" data-fmt="code" data-tooltip="Inline code">&lt;/&gt;</button>
+        <span class="hn-fmt-sep"></span>
+        <button class="hn-fmt" data-fmt="ul" data-tooltip="Bullet list">&bull;</button>
+        <button class="hn-fmt" data-fmt="ol" data-tooltip="Numbered list">1.</button>
+        <button class="hn-fmt" data-fmt="quote" data-tooltip="Blockquote">&raquo;</button>
+        <span class="hn-fmt-sep"></span>
+        <button class="hn-fmt" data-fmt="codeblock" data-tooltip="Code block">&#9636;</button>
+        <button class="hn-fmt" data-fmt="link" data-tooltip="Link (Ctrl+K)">&#128279;</button>
+        <button class="hn-fmt" data-fmt="hr" data-tooltip="Horizontal rule">&mdash;</button>
+        <span class="hn-fmt-sep"></span>
+        <button class="hn-fmt hn-ins-table" data-ins="table" data-tooltip="Insert table">&#9638;</button>
+        <button class="hn-fmt hn-ins-tasklist" data-ins="tasklist" data-tooltip="Insert task list">&#9745;</button>
+        <button class="hn-fmt hn-ins-collapsible" data-ins="collapsible" data-tooltip="Insert collapsible section">&#9662;&#9656;</button>
+        <span class="hn-fmt-sep"></span>
+        <button class="hn-fmt hn-callout hn-callout-note" data-ins="note" data-tooltip="Callout: Note">Note</button>
+        <button class="hn-fmt hn-callout hn-callout-tip" data-ins="tip" data-tooltip="Callout: Tip">Tip</button>
+        <button class="hn-fmt hn-callout hn-callout-important" data-ins="important" data-tooltip="Callout: Important">Impt</button>
+        <button class="hn-fmt hn-callout hn-callout-warning" data-ins="warning" data-tooltip="Callout: Warning">Warn</button>
+        <button class="hn-fmt hn-callout hn-callout-caution" data-ins="caution" data-tooltip="Callout: Caution">Caut</button>
+      </div>
+
+      <div class="hn-doc-surface">
+        <div class="hn-meta-strip">
+          <input class="hn-title-input" id="titleInput" placeholder="Untitled note" spellcheck="false">
+          <span class="status-chip status-chip-outlined-muted hn-filetag" id="filetag">MD</span>
+        </div>
+        <div class="hn-editor-wrap">
+          <textarea class="hn-editor" id="editor" spellcheck="false" autocomplete="off"
+            autocorrect="off" autocapitalize="off" aria-label="Note editor"
+            placeholder="Start typing&#8230;
+
+Tab inserts two spaces. Ctrl+S saves to a file, Ctrl+E exports to notes/.
+Use File > Import to seed this note from a day of scratch captures."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Markdown cheatsheet (right slide-out) -->
+    <div class="hn-cheatsheet" id="cheatsheet">
+      <div class="hn-panel-header">
+        <span class="hn-panel-label">Markdown</span>
+        <span class="hn-panel-actions">
+          <button class="icon-button hn-icon-sm" id="cheatClose" data-tooltip="Close (F1)">&times;</button>
+        </span>
+      </div>
+      <div class="hn-cheat-body" id="cheatBody"></div>
+    </div>
+
+  </div>
+
+  <!-- Selection popup (C): floats above highlighted text with inline actions -->
+  <div class="hn-selbar" id="selBar" aria-hidden="true">
+    <button class="hn-fmt hn-fmt-bold" data-fmt="bold" data-tooltip="Bold (Ctrl+B)">B</button>
+    <button class="hn-fmt hn-fmt-italic" data-fmt="italic" data-tooltip="Italic (Ctrl+I)">I</button>
+    <button class="hn-fmt" data-fmt="code" data-tooltip="Inline code">&lt;/&gt;</button>
+    <button class="hn-fmt" data-fmt="link" data-tooltip="Link (Ctrl+K)">&#128279;</button>
+  </div>
+
+  <!-- Status bar -->
+  <div class="hn-status">
+    <span class="hn-status-left">
+      <span class="hn-dirty-dot" id="dirtyDot"></span>
+      <span id="statusMode">new note</span>
+    </span>
+    <span class="hn-status-right">
+      <span id="wordCount">0 words</span>
+      <span class="hn-save-indicator" id="saveIndicator">saved</span>
+    </span>
+  </div>
+
+  <!-- Import modal -->
+  <div class="modal-overlay" id="importOverlay">
+    <div class="modal-panel hn-modal">
+      <h2 class="hn-modal-title">Import scratch day</h2>
+      <p class="hn-modal-hint">Pick a day. Its scratch entries load as seed content under a dated title. The original scratch file is not modified.</p>
+      <div class="hn-day-list" id="dayList"></div>
+      <div class="hn-modal-actions">
+        <button class="action-button" id="importCancel">Cancel</button>
+        <button class="action-button action-button-primary" id="importConfirm">Load day</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export modal -->
+  <div class="modal-overlay" id="exportOverlay">
+    <div class="modal-panel hn-modal">
+      <h2 class="hn-modal-title">Export to notes/</h2>
+      <div class="hn-field">
+        <label for="exportTitle">Title</label>
+        <input id="exportTitle" class="hn-field-input" placeholder="Untitled note" spellcheck="false">
+        <span class="hn-field-hint">Saves as <code id="slugPreview">untitled-note.md</code> in <code>notes/</code></span>
+      </div>
+      <div class="hn-field">
+        <label>Tag</label>
+        <div><span class="status-chip status-chip-outlined-accent">notes</span></div>
+        <span class="hn-field-hint">Exported with a single <code>notes</code> tag &mdash; retag later in hyperspace.</span>
+      </div>
+      <div class="hn-field">
+        <label>Folder</label>
+        <select id="exportFolder" class="hn-field-input"></select>
+        <span class="hn-field-hint">Root, or an existing folder in the notes sidebar.</span>
+      </div>
+      <p class="hn-modal-hint">Exporting auto-rebuilds the Hypervisor site so the note appears immediately.</p>
+      <div class="hn-modal-actions">
+        <button class="action-button" id="exportCancel">Cancel</button>
+        <button class="action-button action-button-primary" id="exportConfirm">Export &amp; rebuild</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{{JS_BLOCKS}}
+</body>
+</html>
