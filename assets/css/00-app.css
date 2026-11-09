@@ -378,12 +378,9 @@ html, body {
 .hn-save-indicator.visible { opacity: 1; }
 
 /* ---- Modals (compose .modal-overlay + .modal-panel) ---- */
-.hn-modal { width: min(440px, 90%); }
-.hn-modal-title { font-size: var(--fs-mono);color: var(--text-bright); margin-bottom: var(--space-3); }
-.hn-modal-hint { font-size: var(--fs-mono); color: var(--text-dim); line-height: var(--lh-body); margin-bottom: var(--space-4); }
-.hn-modal-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-4); }
+.hn-modal { width: min(480px, 90%); }
 
-.hn-day-list { display: flex; flex-direction: column; gap: var(--space-1); max-height: 320px; overflow-y: auto; }
+.hn-day-list { display: flex; flex-direction: column; gap: var(--space-2); max-height: 320px; overflow-y: auto; scrollbar-gutter: stable; }
 .hn-day-row {
   display: flex;
   justify-content: space-between;
@@ -398,9 +395,10 @@ html, body {
 .hn-day-row:hover { border-color: var(--interactive-border); background: var(--bg-card-hover); }
 .hn-day-row.selected { border-color: var(--selected); background: var(--selected-wash); }
 .hn-day-date { color: var(--text-bright); font-size: var(--fs-mono); }
+.hn-pick-title { font-family: var(--font-body); font-size: var(--fs-prose-ui); font-weight: var(--fw-medium); color: var(--text-bright); line-height: var(--lh-ui); text-transform: capitalize; }
 .hn-day-count { color: var(--text-dim); font-size: var(--fs-mono); }
 
-.hn-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-3); }
+.hn-field { display: flex; flex-direction: column; gap: var(--space-1); }
 .hn-field label { font-size: var(--fs-mono); text-transform: uppercase; letter-spacing: var(--track-label); color: var(--text-muted); }
 .hn-field-input {
   background: var(--bg-card);

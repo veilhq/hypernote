@@ -246,6 +246,7 @@
     else if (act === "open") doOpen();
     else if (act === "save") doSave();
     else if (act === "saveas") doSaveAs();
+    else if (act === "template") openTemplates();
     else if (act === "import") openImport();
     else if (act === "export") openExport();
   });
@@ -680,13 +681,65 @@
   $("importConfirm").addEventListener("click", confirmImport);
 
   // ---------------------------------------------------------------------
+  // Template modal
+  // ---------------------------------------------------------------------
+  var templateOverlay = $("templateOverlay");
+  var templateList = $("templateList");
+  var selectedTemplate = null;
+  function openTemplates() {
+    var a = api(); if (!a) return;
+    templateList.innerHTML = ""; selectedTemplate = null;
+    a.list_templates().then(function (items) {
+      if (!items || !items.length) { templateList.innerHTML = '<div class="hn-empty">No templates found</div>'; }
+      (items || []).forEach(function (t) {
+        var row = document.createElement("div");
+        row.className = "hn-day-row";
+        row.innerHTML = '<span class="hn-pick-title">' + esc(t.title) + '</span>';
+        row.addEventListener("click", function () {
+          templateList.querySelectorAll(".hn-day-row").forEach(function (r) { r.classList.remove("selected"); });
+          row.classList.add("selected"); selectedTemplate = t.name;
+        });
+        row.addEventListener("dblclick", function () { selectedTemplate = t.name; confirmTemplate(); });
+        templateList.appendChild(row);
+      });
+      templateOverlay.classList.add("visible");
+    });
+  }
+  function loadTemplate(name, done) {
+    var a = api(); if (!a) return;
+    a.import_template(name).then(function (r) {
+      if (!r || r.error) { toast("Template failed: " + (r && r.error), "error"); return; }
+      var split = splitDocument(r.content, "");
+      editor.value = split.body; titleInput.value = split.title;
+      setFiletag("md"); currentPath = ""; activeNotePath = null;
+      statusMode.textContent = "from template " + r.name; markDirty(true); updateWordCount();
+      highlightActive();
+      if (done) done();
+    });
+  }
+  function confirmTemplate() {
+    if (!selectedTemplate) { toast("Pick a template first", "warning"); return; }
+    loadTemplate(selectedTemplate, function () {
+      templateOverlay.classList.remove("visible");
+      toast("Loaded " + selectedTemplate);
+    });
+  }
+  $("templateCancel").addEventListener("click", function () { templateOverlay.classList.remove("visible"); });
+  $("templateConfirm").addEventListener("click", confirmTemplate);
+
+  // ---------------------------------------------------------------------
   // Export modal
   // ---------------------------------------------------------------------
   var exportOverlay = $("exportOverlay");
   var exportTitle = $("exportTitle");
   var slugPreview = $("slugPreview");
   var exportFolder = $("exportFolder");
+  // Set when launched from a Hypervisor directory: export writes there instead of notes/.
+  var launchDir = "";
   function openExport() {
+    $("exportHeading").textContent = launchDir ? "Export to " + launchDir + "/" : "Export to notes/";
+    $("exportDirHint").textContent = launchDir ? launchDir + "/" : "notes/";
+    exportFolder.parentNode.style.display = launchDir ? "none" : "";
     exportTitle.value = titleInput.value || "";
     slugPreview.textContent = slugify(exportTitle.value) + ".md";
     // populate folder select from the tree
@@ -700,6 +753,16 @@
   exportTitle.addEventListener("input", function () { slugPreview.textContent = slugify(exportTitle.value) + ".md"; });
   function confirmExport() {
     var a = api(); if (!a) return;
+    if (launchDir) {
+      a.export_to_directory(launchDir, exportTitle.value, composeDocument()).then(function (r) {
+        if (!r || r.error) { toast("Export failed: " + (r && r.error), "error"); return; }
+        exportOverlay.classList.remove("visible");
+        titleInput.value = exportTitle.value; markDirty(false);
+        statusMode.textContent = "exported → " + r.path;
+        toast("Exported " + r.path + " — rebuilding");
+      });
+      return;
+    }
     a.export_note(exportTitle.value, editor.value, exportFolder.value || "").then(function (r) {
       if (!r || r.error) { toast("Export failed: " + (r && r.error), "error"); return; }
       exportOverlay.classList.remove("visible");
@@ -757,7 +820,7 @@
     else if (ctrl && e.key.toLowerCase() === "k") { e.preventDefault(); applyFormat("link"); }
     else if (ctrl && e.key === "\\") { e.preventDefault(); toggleSidebar(); }
     else if (e.key === "F1") { e.preventDefault(); toggleCheatsheet(); }
-    else if (e.key === "Escape") { importOverlay.classList.remove("visible"); exportOverlay.classList.remove("visible"); closeFileMenu(); }
+    else if (e.key === "Escape") { importOverlay.classList.remove("visible"); templateOverlay.classList.remove("visible"); exportOverlay.classList.remove("visible"); closeFileMenu(); }
   });
 
   // ---------------------------------------------------------------------
@@ -777,6 +840,10 @@
       if (api()) {
         api().get_accent().then(window.applyAccent);
         refreshTree();
+        api().get_launch_context().then(function (ctx) {
+          launchDir = (ctx && ctx.dir) || "";
+          if (ctx && ctx.template) loadTemplate(ctx.template);
+        });
       } else if (tries++ < 50) {
         setTimeout(waitBridge, 100);
       }

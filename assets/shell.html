@@ -21,6 +21,7 @@
         <button class="menu-item" data-act="save"><span>Save</span><span class="hn-shortcut">Ctrl+S</span></button>
         <button class="menu-item" data-act="saveas"><span>Save As&#8230;</span><span class="hn-shortcut">Ctrl+Shift+S</span></button>
         <div class="hn-menu-sep"></div>
+        <button class="menu-item" data-act="template"><span>Import template&#8230;</span></button>
         <button class="menu-item" data-act="import"><span>Import scratch day&#8230;</span></button>
         <button class="menu-item" data-act="export"><span>Export to notes&#8230;</span><span class="hn-shortcut">Ctrl+E</span></button>
       </div>
@@ -135,25 +136,46 @@ Use File > Import to seed this note from a day of scratch captures."></textarea>
 
   <!-- Import modal -->
   <div class="modal-overlay" id="importOverlay">
-    <div class="modal-panel hn-modal">
-      <h2 class="hn-modal-title">Import scratch day</h2>
-      <p class="hn-modal-hint">Pick a day. Its scratch entries load as seed content under a dated title. The original scratch file is not modified.</p>
+    <div class="modal-panel modal-panel-stack hn-modal">
+      <div class="modal-head">
+        <h2 class="modal-title">Import scratch day</h2>
+        <p class="modal-hint">Pick a day. Its scratch entries load as seed content under a dated title. The original scratch file is not modified.</p>
+      </div>
       <div class="hn-day-list" id="dayList"></div>
-      <div class="hn-modal-actions">
+      <div class="modal-actions">
         <button class="action-button" id="importCancel">Cancel</button>
         <button class="action-button action-button-primary" id="importConfirm">Load day</button>
       </div>
     </div>
   </div>
 
+  <!-- Template modal -->
+  <div class="modal-overlay" id="templateOverlay">
+    <div class="modal-panel modal-panel-stack hn-modal">
+      <div class="modal-head">
+        <h2 class="modal-title">Import template</h2>
+        <p class="modal-hint">Pick a template from <code>templates/</code>. It loads into the editor as a new document.</p>
+      </div>
+      <div class="hn-day-list" id="templateList"></div>
+      <div class="modal-actions">
+        <button class="action-button" id="templateCancel">Cancel</button>
+        <button class="action-button action-button-primary" id="templateConfirm">Load template</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Export modal -->
   <div class="modal-overlay" id="exportOverlay">
-    <div class="modal-panel hn-modal">
-      <h2 class="hn-modal-title">Export to notes/</h2>
+    <div class="modal-panel modal-panel-stack hn-modal">
+      <div class="modal-head">
+        <h2 class="modal-title" id="exportHeading">Export to notes/</h2>
+        <p class="modal-hint">Exporting auto-rebuilds the Hypervisor site so the note appears immediately.</p>
+      </div>
+      <div class="modal-body">
       <div class="hn-field">
         <label for="exportTitle">Title</label>
         <input id="exportTitle" class="hn-field-input" placeholder="Untitled note" spellcheck="false">
-        <span class="hn-field-hint">Saves as <code id="slugPreview">untitled-note.md</code> in <code>notes/</code></span>
+        <span class="hn-field-hint">Saves as <code id="slugPreview">untitled-note.md</code> in <code id="exportDirHint">notes/</code></span>
       </div>
       <div class="hn-field">
         <label>Tag</label>
@@ -165,8 +187,8 @@ Use File > Import to seed this note from a day of scratch captures."></textarea>
         <select id="exportFolder" class="hn-field-input"></select>
         <span class="hn-field-hint">Root, or an existing folder in the notes sidebar.</span>
       </div>
-      <p class="hn-modal-hint">Exporting auto-rebuilds the Hypervisor site so the note appears immediately.</p>
-      <div class="hn-modal-actions">
+      </div>
+      <div class="modal-actions">
         <button class="action-button" id="exportCancel">Cancel</button>
         <button class="action-button action-button-primary" id="exportConfirm">Export &amp; rebuild</button>
       </div>

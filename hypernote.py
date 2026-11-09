@@ -10,8 +10,10 @@ Part of the hyper ecosystem (Hypervisor, Hyperagent, Hyperfield, Hypernote).
 
 Usage:
     pythonw hypernote.py
+    pythonw hypernote.py --template idea-template.md --dir ideas
 """
 
+import argparse
 import json
 import re
 import subprocess
@@ -31,6 +33,7 @@ HYPERSPACE_ROOT = HYPERNOTE_DIR.parent
 HYPERVISOR_DIR = HYPERSPACE_ROOT / ".hypervisor"
 SCRATCH_DIR = HYPERSPACE_ROOT / ".scratch"
 NOTES_DIR = HYPERSPACE_ROOT / "notes"
+TEMPLATES_DIR = HYPERSPACE_ROOT / "templates"
 TREE_MANIFEST = NOTES_DIR / ".hypernote-tree.json"
 ICON_FILE = HYPERNOTE_DIR / "assets" / "hypernote.ico"
 
@@ -412,6 +415,56 @@ class HypernoteAPI:
         logger.info("imported scratch day %s (%d chars seed)", date, len(seed))
         return {"title": f"Notes {date}", "content": seed}
 
+    # --- templates ---
+    def get_launch_context(self) -> dict:
+        """Template and target directory passed on the command line, if any."""
+        return dict(LAUNCH_CONTEXT)
+
+    def list_templates(self) -> list:
+        """Return [{name, title}] for each markdown file in templates/."""
+        out = []
+        if not TEMPLATES_DIR.exists():
+            return out
+        for path in sorted(TEMPLATES_DIR.glob("*.md")):
+            if path.name.startswith("_"):
+                continue
+            title = path.stem.removesuffix("-template").replace("-", " ").replace("_", " ")
+            out.append({"name": path.name, "title": title})
+        return out
+
+    def import_template(self, name: str) -> dict:
+        """Read templates/{name} and return its raw content."""
+        path = (TEMPLATES_DIR / (name or "")).resolve()
+        if path.parent != TEMPLATES_DIR.resolve() or path.suffix != ".md" or path.name.startswith("_") or not path.is_file():
+            return {"error": "unknown template"}
+        try:
+            content = path.read_text(encoding="utf-8")
+        except Exception as e:
+            return {"error": str(e)}
+        logger.info("imported template %s", path.name)
+        return {"name": path.name, "content": content}
+
+    def export_to_directory(self, rel_dir: str, title: str, content: str) -> dict:
+        """Write {rel_dir}/{slug}.md verbatim (templates carry their own header)
+        and trigger a Hypervisor rebuild. Never overwrites an existing file."""
+        target = (HYPERSPACE_ROOT / (rel_dir or "")).resolve()
+        root = HYPERSPACE_ROOT.resolve()
+        if root not in target.parents or any(p.startswith(".") for p in target.relative_to(root).parts):
+            return {"error": "directory outside hyperspace"}
+        target.mkdir(parents=True, exist_ok=True)
+        path = target / f"{_slugify(title)}.md"
+        if path.exists():
+            return {"error": f"{path.name} already exists"}
+        try:
+            path.write_text(content or "", encoding="utf-8")
+        except Exception as e:
+            logger.warning("export_to_directory write error %s: %s", path, e)
+            return {"error": str(e)}
+        rel = path.relative_to(root).as_posix()
+        logger.info("exported %s", rel)
+        self._trigger_rebuild()
+        return {"path": rel}
+
     # --- export to notes/ ---
     def export_note(self, title: str, content: str, folder: str = "") -> dict:
         """Write notes/[folder/]{slug}.md with a hyperspace metadata header,
@@ -679,7 +732,21 @@ def _start_theme_watcher(window):
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+LAUNCH_CONTEXT = {"template": "", "dir": ""}
+
+
+def _parse_args(argv):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--template", default="")
+    parser.add_argument("--dir", default="")
+    args, _ = parser.parse_known_args(argv)
+    return args
+
+
 def main():
+    args = _parse_args(sys.argv[1:])
+    LAUNCH_CONTEXT["template"] = args.template
+    LAUNCH_CONTEXT["dir"] = args.dir.replace("\\", "/").strip("/")
     # Set a unique AppUserModelID so Windows treats this as a distinct taskbar
     # entry, separate from Hypervisor and other pythonw-hosted ecosystem apps.
     import ctypes
